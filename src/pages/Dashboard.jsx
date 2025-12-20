@@ -7,14 +7,37 @@ import { Plus, Loader2, BookOpen } from 'lucide-react'
 
 export function Dashboard() {
   const { user } = useAuth()
+  
   const [subjects, setSubjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('') // Estado para guardar o nome
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
-    if (user) fetchSubjects()
+    if (user) {
+      fetchSubjects()
+      fetchProfile() // <--- Busca o nome assim que carregar
+    }
   }, [user])
 
+  // --- BUSCA O NOME DO USUÁRIO ---
+  async function fetchProfile() {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      if (data && data.full_name) {
+        setUserName(data.full_name)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error)
+    }
+  }
+
+  // --- BUSCA AS MATÉRIAS ---
   async function fetchSubjects() {
     try {
       const { data, error } = await supabase
@@ -31,20 +54,23 @@ export function Dashboard() {
     }
   }
 
+  // Lógica para pegar só o primeiro nome (Ex: Eduardo Felipe -> Eduardo)
+  const firstName = userName ? userName.split(' ')[0] : 'Estudante'
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-24"> {/* pb-24 dá espaço para o menu não cortar o conteúdo */}
+    <div className="min-h-screen bg-gray-50 pb-24">
       
       {/* Cabeçalho */}
       <header className="bg-white shadow-sm pt-8 pb-6 px-4 sticky top-0 z-10">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Olá, Estudante 👋</h1>
+            {/* AQUI ESTÁ A MÁGICA DO NOME: */}
+            <h1 className="text-2xl font-bold text-gray-900">Olá, {firstName} 👋</h1>
             <p className="text-gray-500 text-sm">Foco nos estudos!</p>
           </div>
-          {/* O botão de sair foi para a tela de Perfil, limpando o visual aqui */}
         </div>
         
-        {/* Barra de Progresso (Exemplo visual) */}
+        {/* Barra de Progresso (Visual) */}
         <div className="bg-gray-100 rounded-full h-3 w-full overflow-hidden mt-2 relative">
           <div className="bg-[#0047AB] h-full w-[45%] rounded-full absolute top-0 left-0"></div>
         </div>
@@ -88,7 +114,7 @@ export function Dashboard() {
         )}
       </main>
 
-      {/* Botão Flutuante (FAB) - Ajustado para não ficar embaixo do menu */}
+      {/* Botão Flutuante (FAB) */}
       {subjects.length > 0 && (
         <button 
           onClick={() => setIsModalOpen(true)}
