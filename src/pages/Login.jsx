@@ -1,20 +1,20 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
-import { Mail, Lock, ArrowRight, Loader2, GraduationCap, CheckCircle } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
+import logo from '../assets/logo.png' // IMPORTANTE: Garanta que a imagem está aqui
 
 export function Login() {
   const navigate = useNavigate()
   const { user } = useAuth()
   
   const [loading, setLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false) // Alternar entre Login/Cadastro
+  const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
 
-  // Redireciona se já estiver logado
   if (user) {
     navigate('/dashboard')
     return null
@@ -26,7 +26,6 @@ export function Login() {
     
     try {
       if (isSignUp) {
-        // --- CADASTRO ---
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -34,9 +33,8 @@ export function Login() {
         })
         if (error) throw error
         alert('Cadastro realizado! Verifique seu e-mail ou faça login.')
-        setIsSignUp(false) // Volta para tela de login
+        setIsSignUp(false)
       } else {
-        // --- LOGIN ---
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -51,31 +49,36 @@ export function Login() {
     }
   }
 
+  // Cor Azul do Logotipo: #0047AB
+  const bluePrimary = 'bg-[#0047AB]'
+  const blueHover = 'hover:bg-[#003580]'
+  const textBlue = 'text-[#0047AB]'
+
   return (
     <div className="min-h-screen flex bg-white">
       
-      {/* LADO ESQUERDO - BANNER (Só aparece em telas grandes lg:flex) */}
-      <div className="hidden lg:flex w-1/2 bg-blue-600 relative overflow-hidden items-center justify-center">
-        {/* Círculos decorativos de fundo */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent scale-150"></div>
+      {/* LADO ESQUERDO - BANNER COM LOGO (Só em telas grandes) */}
+      <div className={`hidden lg:flex w-1/2 ${bluePrimary} relative overflow-hidden items-center justify-center`}>
+        {/* Efeito de fundo sutil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20"></div>
         
-        <div className="relative z-10 text-white max-w-md p-12">
-            <div className="bg-white/10 backdrop-blur-lg p-4 rounded-2xl w-16 h-16 flex items-center justify-center mb-8 shadow-inner border border-white/20">
-                <GraduationCap className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold mb-6 leading-tight">Gerencie sua vida acadêmica em um só lugar.</h2>
-            <div className="space-y-4 text-blue-100 text-lg">
+        <div className="relative z-10 text-white max-w-md p-12 flex flex-col items-center text-center">
+            {/* Logotipo em Branco */}
+            <img src={logo} alt="UniFocus Logo" className="w-64 mb-8 brightness-0 invert" />
+            
+            <h2 className="text-3xl font-bold mb-6 leading-tight">Sua jornada acadêmica,<br/>simplificada.</h2>
+            <div className="space-y-4 text-blue-100 text-lg text-left w-full pl-8">
                 <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-300" />
-                    <span>Controle de faltas inteligente</span>
+                    <CheckCircle className="w-6 h-6 text-blue-300" />
+                    <span>Controle de faltas e presença</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-300" />
+                    <CheckCircle className="w-6 h-6 text-blue-300" />
                     <span>Calculadora de notas automática</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-300" />
-                    <span>Feed de turmas colaborativo</span>
+                    <CheckCircle className="w-6 h-6 text-blue-300" />
+                    <span>Mural de turmas colaborativo</span>
                 </div>
             </div>
         </div>
@@ -85,49 +88,43 @@ export function Login() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="max-w-md w-full space-y-8">
           
-          {/* Cabeçalho Mobile (Logo aparece aqui em telas pequenas) */}
-          <div className="text-center lg:text-left">
-            <div className="inline-flex lg:hidden bg-blue-50 p-3 rounded-xl mb-4">
-               <GraduationCap className="w-8 h-8 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          {/* Cabeçalho com Logo Azul */}
+          <div className="text-center">
+            <img src={logo} alt="UniFocus Logo" className="w-48 mx-auto mb-6" />
+            <h1 className={`text-2xl font-bold ${textBlue}`}>
                 {isSignUp ? 'Crie sua conta' : 'Bem-vindo de volta'}
             </h1>
             <p className="mt-2 text-gray-500">
-                {isSignUp ? 'Comece a organizar seus estudos hoje.' : 'Entre com seus dados para acessar o painel.'}
+                {isSignUp ? 'Preencha os dados para começar.' : 'Entre para acessar seu painel.'}
             </p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-6">
-            
-            {/* Campo Nome (Só no Cadastro) */}
+          <form onSubmit={handleAuth} className="space-y-5">
             {isSignUp && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                <div>
                     <label className="text-sm font-medium text-gray-700 block mb-1.5">Nome Completo</label>
                     <div className="relative">
                         <input 
                             required
                             type="text" 
-                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0047AB] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
                             placeholder="Seu nome"
                             value={fullName}
                             onChange={e => setFullName(e.target.value)}
                         />
-                        <div className="absolute left-3 top-3.5 text-gray-400">
-                             <span className="text-lg">👤</span> {/* Usando emoji simples ou importe User do lucide */}
-                        </div>
+                        <span className="absolute left-3 top-3.5 text-gray-400 text-lg">👤</span>
                     </div>
                 </div>
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">E-mail Acadêmico</label>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">E-mail</label>
               <div className="relative">
                 <input 
                   required
                   type="email" 
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
-                  placeholder="aluno@universidade.com"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0047AB] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
+                  placeholder="seu@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
@@ -138,13 +135,13 @@ export function Login() {
             <div>
               <div className="flex justify-between items-center mb-1.5">
                   <label className="text-sm font-medium text-gray-700">Senha</label>
-                  {!isSignUp && <a href="#" className="text-sm text-blue-600 hover:underline">Esqueceu?</a>}
+                  {!isSignUp && <a href="#" className={`text-sm ${textBlue} hover:underline`}>Esqueceu?</a>}
               </div>
               <div className="relative">
                 <input 
                   required
                   type="password" 
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0047AB] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -156,38 +153,24 @@ export function Login() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition transform active:scale-[0.98] shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+              className={`w-full ${bluePrimary} ${blueHover} text-white font-bold py-3.5 rounded-xl transition transform active:scale-[0.98] shadow-md hover:shadow-lg flex items-center justify-center gap-2`}
             >
-              {loading ? (
-                <Loader2 className="animate-spin w-5 h-5" />
-              ) : (
+              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
                 <>
-                  {isSignUp ? 'Criar Conta Grátis' : 'Entrar na Plataforma'}
+                  {isSignUp ? 'Criar Conta' : 'Entrar'}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Divisor "Ou" */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-            <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">ou</span></div>
-          </div>
-
-          {/* Botão Google (Fake visual por enquanto) */}
-          <button type="button" className="w-full bg-white border border-gray-200 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-50 transition flex items-center justify-center gap-3">
-            <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-            Continuar com Google
-          </button>
-
           <p className="text-center text-gray-600 text-sm">
-            {isSignUp ? 'Já tem uma conta?' : 'Ainda não tem conta?'}
+            {isSignUp ? 'Já tem uma conta?' : 'Não tem conta?'}
             <button 
                 onClick={() => setIsSignUp(!isSignUp)} 
-                className="text-blue-600 font-bold ml-1 hover:underline focus:outline-none"
+                className={`${textBlue} font-bold ml-1 hover:underline focus:outline-none`}
             >
-                {isSignUp ? 'Fazer Login' : 'Criar conta grátis'}
+                {isSignUp ? 'Fazer Login' : 'Cadastre-se'}
             </button>
           </p>
 
