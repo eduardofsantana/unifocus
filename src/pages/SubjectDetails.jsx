@@ -1,204 +1,264 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { ArrowLeft, Plus, Trash2, Calculator, AlertTriangle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Loader2, Calculator, AlertCircle } from 'lucide-react'
 
 export function SubjectDetails() {
-  const { id } = useParams() // Pega o ID da URL
+  const { id } = useParams()
+  const navigate = useNavigate()
+  
   const [subject, setSubject] = useState(null)
   const [grades, setGrades] = useState([])
   const [loading, setLoading] = useState(true)
-
-  // Estados para nova nota
-  const [newGradeName, setNewGradeName] = useState('')
-  const [newGradeWeight, setNewGradeWeight] = useState(1)
-  const [newGradeValue, setNewGradeValue] = useState('')
+  
+  // Formulário de Nova Nota
+  const [newName, setNewName] = useState('')
+  const [newWeight, setNewWeight] = useState(1)
+  const [newValue, setNewValue] = useState('')
+  const [newUnit, setNewUnit] = useState('Unidade 1') // Unidade selecionada
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
-    fetchData()
+    fetchSubject()
   }, [id])
 
-  async function fetchData() {
+  async function fetchSubject() {
     try {
-      // 1. Busca a Matéria
-      const { data: sub } = await supabase.from('subjects').select('*').eq('id', id).single()
-      setSubject(sub)
+      // Busca a matéria
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (subjectError) throw subjectError
+      setSubject(subjectData)
 
-      // 2. Busca as Notas
-      const { data: grd } = await supabase.from('grades').select('*').eq('subject_id', id)
-      setGrades(grd || [])
+      // Busca as notas
+      const { data: gradesData, error: gradesError } = await supabase
+        .from('grades')
+        .select('*')
+        .eq('subject_id', id)
+        .order('created_at', { ascending: true })
+
+      if (gradesError) throw gradesError
+      setGrades(gradesData || [])
+
     } catch (error) {
       console.error(error)
+      navigate('/dashboard')
     } finally {
       setLoading(false)
     }
   }
 
-  // --- LÓGICA DE FALTAS ---
-  async function updateAbsences(change) {
-    const newValue = Math.max(0, subject.current_absences + change)
-    // Atualiza na tela na hora (otimista)
-    setSubject({ ...subject, current_absences: newValue })
-    
-    // Salva no banco
-    await supabase.from('subjects').update({ current_absences: newValue }).eq('id', id)
-  }
-
-  // --- LÓGICA DE NOTAS ---
-  async function addGrade(e) {
+  async function handleAddGrade(e) {
     e.preventDefault()
-    if (!newGradeName || !newGradeValue) return
+    if (!newName || !newValue) return
+    setAdding(true)
 
-    const newGrade = {
-      subject_id: id,
-      name: newGradeName,
-      weight: parseFloat(newGradeWeight),
-      value: parseFloat(newGradeValue),
-    }
+    try {
+      const { error } = await supabase.from('grades').insert([{
+        subject_id: id,
+        name: newName,
+        weight: parseFloat(newWeight),
+        value: parseFloat(newValue.replace(',', '.')),
+        unit: newUnit // Salva qual unidade é
+      }])
 
-    const { data, error } = await supabase.from('grades').insert([newGrade]).select()
-    
-    if (!error && data) {
-      setGrades([...grades, data[0]])
-      setNewGradeName('')
-      setNewGradeValue('')
+      if (error) throw error
+      
+      setNewName('')
+      setNewValue('')
+      setNewWeight(1)
+      fetchSubject() // Recarrega tudo
+    } catch (error) {
+      alert(error.message)
+    } finally {
+      setAdding(false)
     }
   }
 
-  async function deleteGrade(gradeId) {
-    await supabase.from('grades').delete().eq('id', gradeId)
-    setGrades(grades.filter(g => g.id !== gradeId))
+  async function handleDeleteGrade(gradeId) {
+    if (confirm('Apagar esta nota?')) {
+      await supabase.from('grades').delete().eq('id', gradeId)
+      fetchSubject()
+    }
   }
 
   // --- CÁLCULOS ---
-  // Média Ponderada Atual
-  const totalWeight = grades.reduce((acc, g) => acc + g.weight, 0)
-  const totalPoints = grades.reduce((acc, g) => acc + (g.value * g.weight), 0)
-  const currentAverage = totalWeight === 0 ? 0 : (totalPoints / totalWeight).toFixed(1)
+  function calculateAverage(gradesList) {
+    if (gradesList.length === 0) return 0
+    const totalWeight = gradesList.reduce((acc, g) => acc + (g.weight || 0), 0)
+    const totalValue = gradesList.reduce((acc, g) => acc + ((g.value || 0) * (g.weight || 0)), 0)
+    return totalWeight > 0 ? totalValue / totalWeight : 0
+  }
 
-  // Calculadora de Sobrevivência (Simples)
-  // Assume que falta 1 prova com peso 1 (ou o usuário pode ajustar mentalmente)
-  const target = subject?.passing_grade || 7.0
-  // Fórmula: (Meta * (PesoTotal + PesoProxima) - PontosAtuais) / PesoProxima
-  // Vamos assumir Peso da Próxima = 1.0 para simplificar a visualização rápida
-  const nextExamWeight = 1.0 
-  const neededScore = ((target * (totalWeight + nextExamWeight)) - totalPoints) / nextExamWeight
+  if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-[#0047AB]" /></div>
 
-  if (loading) return <div className="p-8 text-center">Carregando...</div>
+  // Filtra as notas por unidade
+  const gradesU1 = grades.filter(g => g.unit === 'Unidade 1')
+  const gradesU2 = grades.filter(g => g.unit === 'Unidade 2')
+  
+  // Médias
+  const avgU1 = calculateAverage(gradesU1)
+  const avgU2 = calculateAverage(gradesU2)
+  const globalAverage = calculateAverage(grades) // Média Geral
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Cabeçalho */}
+      
+      {/* CABEÇALHO */}
       <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
-        <div className="flex items-center gap-4 mb-4">
-          <Link to="/dashboard" className="p-2 hover:bg-gray-100 rounded-full">
-            <ArrowLeft className="h-6 w-6 text-gray-600" />
+        <div className="flex items-center gap-3">
+          <Link to="/dashboard" className="p-2 hover:bg-gray-100 rounded-full text-gray-600">
+            <ArrowLeft className="h-6 w-6" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{subject.name}</h1>
-            <p className="text-sm text-gray-500">{subject.professor || 'Sem professor'}</p>
+            {/* Removido o "Sem Professor" daqui */}
           </div>
-        </div>
-
-        {/* Status Bar */}
-        <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                <p className="text-xs text-blue-600 font-bold uppercase">Média Atual</p>
-                <p className="text-2xl font-bold text-blue-800">{currentAverage}</p>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                <p className="text-xs text-orange-600 font-bold uppercase">Faltas</p>
-                <div className="flex items-center justify-between">
-                    <p className="text-xl font-bold text-orange-800">
-                        {subject.current_absences}/{subject.max_absences}
-                    </p>
-                    <div className="flex gap-1">
-                        <button onClick={() => updateAbsences(-1)} className="w-6 h-6 bg-white rounded border border-orange-200 flex items-center justify-center font-bold text-orange-600">-</button>
-                        <button onClick={() => updateAbsences(1)} className="w-6 h-6 bg-white rounded border border-orange-200 flex items-center justify-center font-bold text-orange-600">+</button>
-                    </div>
-                </div>
-            </div>
         </div>
       </div>
 
-      <main className="p-4 space-y-6">
+      <main className="max-w-3xl mx-auto p-4 space-y-6">
         
-        {/* CALCULADORA DE SOBREVIVÊNCIA */}
-        {totalWeight > 0 && currentAverage < target && (
-            <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-red-500">
-                <div className="flex items-start gap-3">
-                    <div className="bg-red-100 p-2 rounded-full">
-                        <Calculator className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-gray-800">Modo Sobrevivência</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Para fechar com <strong>{target}</strong>, você precisa tirar aproximadamente:
-                        </p>
-                        <p className="text-3xl font-black text-red-600 mt-2">
-                            {neededScore > 10 ? "IMPOSSÍVEL 💀" : neededScore <= 0 ? "APROVADO 🎉" : neededScore.toFixed(1)}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">(Calculado considerando próxima prova com Peso 1)</p>
-                    </div>
+        {/* RESUMO GERAL */}
+        <div className="grid grid-cols-2 gap-4">
+            <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg shadow-blue-200">
+                <p className="text-blue-100 text-xs font-bold uppercase mb-1">Média Geral</p>
+                <div className="text-3xl font-bold flex items-center gap-2">
+                    {globalAverage.toFixed(1)}
+                    <Calculator className="w-5 h-5 text-blue-300" />
                 </div>
             </div>
-        )}
-
-        {/* LISTA DE NOTAS */}
-        <div>
-            <h3 className="font-bold text-gray-800 mb-3">Minhas Notas</h3>
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                {grades.map(grade => (
-                    <div key={grade.id} className="flex justify-between items-center p-4 border-b border-gray-100 last:border-0">
-                        <div>
-                            <p className="font-medium text-gray-900">{grade.name}</p>
-                            <p className="text-xs text-gray-500">Peso {grade.weight}</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="font-bold text-lg text-gray-700">{grade.value}</span>
-                            <button onClick={() => deleteGrade(grade.id)} className="text-red-300 hover:text-red-500">
-                                <Trash2 className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-                
-                {/* Formulário de Adicionar Nota */}
-                <form onSubmit={addGrade} className="p-4 bg-gray-50 grid grid-cols-12 gap-2">
-                    <div className="col-span-5">
-                        <input 
-                            placeholder="Nome (ex: P2)" 
-                            className="w-full p-2 text-sm border rounded"
-                            value={newGradeName}
-                            onChange={e => setNewGradeName(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="col-span-3">
-                        <input 
-                            type="number" step="0.1" placeholder="Peso" 
-                            className="w-full p-2 text-sm border rounded"
-                            value={newGradeWeight}
-                            onChange={e => setNewGradeWeight(e.target.value)}
-                        />
-                    </div>
-                    <div className="col-span-3">
-                        <input 
-                            type="number" step="0.1" placeholder="Nota" 
-                            className="w-full p-2 text-sm border rounded"
-                            value={newGradeValue}
-                            onChange={e => setNewGradeValue(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="col-span-1">
-                        <button type="submit" className="w-full h-full bg-blue-600 text-white rounded flex items-center justify-center">
-                            <Plus className="h-4 w-4" />
-                        </button>
-                    </div>
-                </form>
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-gray-400 text-xs font-bold uppercase mb-1">Faltas</p>
+                <div className="text-3xl font-bold text-gray-800">
+                    {subject.current_absences}<span className="text-gray-300 text-lg">/{subject.max_absences}</span>
+                </div>
             </div>
         </div>
+
+        {/* --- ÁREA DAS UNIDADES --- */}
+        <div className="grid md:grid-cols-2 gap-6">
+            
+            {/* UNIDADE 1 */}
+            <div className="space-y-3">
+                <div className="flex justify-between items-center px-1">
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span> Unidade 1
+                    </h3>
+                    <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded">
+                        Média: {avgU1.toFixed(1)}
+                    </span>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm min-h-[100px]">
+                    {gradesU1.length === 0 ? (
+                        <p className="text-center text-gray-400 text-xs py-8 italic">Nenhuma nota lançada.</p>
+                    ) : (
+                        gradesU1.map(grade => (
+                            <div key={grade.id} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                                <div>
+                                    <span className="font-medium text-gray-800 text-sm">{grade.name}</span>
+                                    {grade.weight !== 1 && <span className="text-[10px] text-gray-400 ml-2">(Peso {grade.weight})</span>}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-gray-700">{grade.value.toFixed(1)}</span>
+                                    <button onClick={() => handleDeleteGrade(grade.id)} className="text-gray-300 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* UNIDADE 2 */}
+            <div className="space-y-3">
+                <div className="flex justify-between items-center px-1">
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Unidade 2
+                    </h3>
+                    <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-1 rounded">
+                        Média: {avgU2.toFixed(1)}
+                    </span>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm min-h-[100px]">
+                    {gradesU2.length === 0 ? (
+                        <p className="text-center text-gray-400 text-xs py-8 italic">Nenhuma nota lançada.</p>
+                    ) : (
+                        gradesU2.map(grade => (
+                            <div key={grade.id} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                                <div>
+                                    <span className="font-medium text-gray-800 text-sm">{grade.name}</span>
+                                    {grade.weight !== 1 && <span className="text-[10px] text-gray-400 ml-2">(Peso {grade.weight})</span>}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-gray-700">{grade.value.toFixed(1)}</span>
+                                    <button onClick={() => handleDeleteGrade(grade.id)} className="text-gray-300 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+        </div>
+
+        {/* --- FORMULÁRIO DE ADICIONAR --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 mt-6">
+            <h3 className="font-bold text-sm text-gray-700 uppercase mb-4">Lançar Nova Nota</h3>
+            <form onSubmit={handleAddGrade} className="flex flex-col gap-3">
+                
+                <div className="flex gap-2">
+                    {/* Botões de Seleção de Unidade */}
+                    <button 
+                        type="button" 
+                        onClick={() => setNewUnit('Unidade 1')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${newUnit === 'Unidade 1' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}`}
+                    >
+                        Unidade 1
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => setNewUnit('Unidade 2')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${newUnit === 'Unidade 2' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-gray-200 text-gray-500'}`}
+                    >
+                        Unidade 2
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
+                    <input 
+                        placeholder="Nome (Ex: Prova 1)" 
+                        className="p-3 bg-gray-50 border rounded-xl outline-none text-sm"
+                        value={newName} onChange={e => setNewName(e.target.value)}
+                        required
+                    />
+                    <input 
+                        type="number" placeholder="Peso" 
+                        className="p-3 bg-gray-50 border rounded-xl outline-none text-sm text-center"
+                        value={newWeight} onChange={e => setNewWeight(e.target.value)}
+                        required
+                    />
+                    <input 
+                        type="number" step="0.1" placeholder="Nota" 
+                        className="p-3 bg-gray-50 border rounded-xl outline-none text-sm font-bold text-center"
+                        value={newValue} onChange={e => setNewValue(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <button 
+                    type="submit" 
+                    disabled={adding}
+                    className="bg-[#0047AB] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-800 transition shadow-lg shadow-blue-200 hover:shadow-none"
+                >
+                    {adding ? <Loader2 className="animate-spin w-5 h-5" /> : <><Plus className="w-5 h-5"/> Adicionar Nota</>}
+                </button>
+            </form>
+        </div>
+
       </main>
     </div>
   )
