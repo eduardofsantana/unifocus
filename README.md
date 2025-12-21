@@ -8,16 +8,6 @@
 
 ---
 
-## 🔍 Preview
-
-> Adicione aqui prints ou GIFs da aplicação, por exemplo:
->
-> - Dashboard com períodos, notas e faltas  
-> - Tela do feed de turmas  
-> - Tela de currículo extra / certificações  
-
----
-
 ## 📚 Sobre o Projeto
 
 **UniFocus** é um gerenciador acadêmico voltado para estudantes universitários que precisam organizar notas, faltas e cursos complementares de forma simples e visual.  
