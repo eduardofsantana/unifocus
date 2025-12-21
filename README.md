@@ -70,32 +70,36 @@ Para rodar o projeto na sua máquina:
    ```bash
    npm install
 3. **Configure o Supabase**
+
     Crie um projeto no Supabase. 
+
     Crie um arquivo .env na raiz do projeto e adicione:
 
+    ```bash
     VITE_SUPABASE_URL=sua_url_aqui
     VITE_SUPABASE_ANON_KEY=sua_chave_aqui
 
 4. **Crie as tabelas necessárias**
-Execute os scripts SQL para criar as tabelas:
 
-profiles
+    Execute os scripts SQL para criar as tabelas:
 
-subjects
+    profiles
 
-grades
+    subjects
 
-classrooms
+    grades
 
-classroom_members
+    classrooms
 
-classroom_posts
+    classroom_members
 
-certifications
+    classroom_posts
+
+    certifications
 
 5. Inicie o servidor de desenvolvimento
-   ```bash
-npm run dev
+    ```bash
+    npm run dev
 
 
 📝 Considerações Finais
