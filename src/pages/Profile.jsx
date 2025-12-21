@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../contexts/AuthContext.jsx'
-import { supabase } from '../supabaseClient.js'
-import { useTheme } from '../contexts/ThemeContext.jsx'
-import { User, Mail, LogOut, Loader2, Camera, Lock, GraduationCap, Hash, Moon, Sun } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
+import { supabase } from '../supabaseClient'
+import { User, Mail, LogOut, Loader2, Camera, Lock, GraduationCap, Hash, Moon, Sun, Github, Linkedin, Heart, Code } from 'lucide-react'
 
 export function Profile() {
   const { user, signOut } = useAuth()
@@ -129,6 +129,7 @@ export function Profile() {
 
       <div className="max-w-md mx-auto space-y-8">
         
+        {/* CARD DADOS PESSOAIS */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col items-center relative transition-colors">
             <div className="relative group mb-6">
                 <div className="w-28 h-28 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-[#0047AB] dark:text-blue-400 text-3xl font-bold border-4 border-white dark:border-slate-700 shadow-md overflow-hidden">
@@ -177,13 +178,26 @@ export function Profile() {
             </form>
         </div>
 
+        {/* CARD SENHA */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 transition-colors">
             <h3 className="text-sm font-bold text-gray-700 dark:text-slate-300 uppercase mb-4 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-[#0047AB] dark:text-blue-400" /> Segurança
             </h3>
             <form onSubmit={updatePassword} className="space-y-3">
-                <input type="password" placeholder="Nova senha" className="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 text-gray-900 dark:text-white" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                <input type="password" placeholder="Confirme" className="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 text-gray-900 dark:text-white" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                <input 
+                    type="password" 
+                    placeholder="Nova senha" 
+                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 text-gray-900 dark:text-white" 
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)} 
+                />
+                <input 
+                    type="password" 
+                    placeholder="Confirme a nova senha" 
+                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 text-gray-900 dark:text-white" 
+                    value={confirmPassword} 
+                    onChange={e => setConfirmPassword(e.target.value)} 
+                />
                 <button type="submit" disabled={changingPass || !newPassword} className="w-full border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition active:scale-95 disabled:opacity-50">
                     {changingPass ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Atualizar Senha'}
                 </button>
@@ -193,6 +207,39 @@ export function Profile() {
         <button onClick={signOut} className="w-full text-red-500 font-medium py-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center justify-center gap-2">
             <LogOut className="w-4 h-4 inline mr-2" /> Sair da Conta
         </button>
+
+        {/* RODAPÉ DO DESENVOLVEDOR */}
+        <div className="text-center pt-8 pb-4 border-t border-gray-100 dark:border-slate-800 mt-8 opacity-60 hover:opacity-100 transition-opacity">
+            <p className="text-xs text-gray-400 dark:text-slate-500 mb-2 font-mono">UniFocus v1.0</p>
+            
+            <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-gray-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
+                    Desenvolvido com <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" /> por
+                </p>
+                <a 
+                    href="https://github.com/eduardofsantana" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="font-bold text-gray-700 dark:text-slate-300 hover:text-[#0047AB] dark:hover:text-blue-400 transition flex items-center gap-2 bg-gray-100 dark:bg-slate-800 px-4 py-2 rounded-full text-sm"
+                >
+                    <Code className="w-4 h-4" /> Eduardo Felipe
+                </a>
+            </div>
+
+            <div className="flex justify-center gap-4 mt-4">
+                <a href="https://github.com/eduardofsantana" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full">
+                    <Github className="w-5 h-5" />
+                </a>
+                <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#0077b5] transition p-2 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-full">
+                    <Linkedin className="w-5 h-5" />
+                </a>
+            </div>
+            
+            <p className="text-[10px] text-gray-300 dark:text-slate-700 mt-6">
+                © {new Date().getFullYear()} UniFocus. Feito para estudantes.
+            </p>
+        </div>
+
       </div>
     </div>
   )
