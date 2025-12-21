@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../supabaseClient'
-import { SubjectCard } from '../components/SubjectCard'
-import { AddSubjectModal } from '../components/AddSubjectModal'
-import { DashboardSkeleton } from '../components/Skeletons'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { supabase } from '../supabaseClient.js'
+import { SubjectCard } from '../components/SubjectCard.jsx'
+import { AddSubjectModal } from '../components/AddSubjectModal.jsx'
+import { DashboardSkeleton } from '../components/Skeletons.jsx'
 import { Plus, Loader2, BookOpen, GraduationCap, ChevronDown, ChevronUp, CheckCircle, BarChart3, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -45,7 +45,7 @@ export function Dashboard() {
       setSubjects(subjectData || [])
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao carregar dados.')
+      // toast.error('Erro ao carregar dados.') // Opcional
     } finally {
       setLoading(false)
     }
@@ -60,27 +60,19 @@ export function Dashboard() {
   function togglePeriod(period) { setExpandedPeriods(prev => ({...prev, [period]: !prev[period]})) }
   function openAddModal(period) { setSelectedPeriod(period); setIsModalOpen(true) }
   
-  // CORREÇÃO AQUI: Nomes das variáveis ajustados
   function getPeriodProgress(periodName) {
     const subs = groupedSubjects[periodName] || []
     if (subs.length === 0) return 0
     
     const passedCount = subs.filter(sub => {
         const grades = sub.grades || []
-        // Calcula peso total e valor total
-        const totalWeight = grades.reduce((acc, g) => acc + (g.weight || 0), 0)
-        const totalValue = grades.reduce((acc, g) => acc + ((g.value || 0) * (g.weight || 0)), 0)
-        
-        // Calcula média
-        const avg = grades.length > 0 ? (totalWeight > 0 ? totalValue / totalWeight : 0) : 0
-        
-        // Verifica se passou
+        const totalW = grades.reduce((acc, g) => acc + (g.weight || 0), 0)
+        const totalV = grades.reduce((acc, g) => acc + ((g.value || 0) * (g.weight || 0)), 0)
+        const avg = grades.length > 0 ? (totalW > 0 ? totalV / totalW : 0) : 0
         return avg >= (sub.passing_grade || 7)
     }).length
-
     return Math.round((passedCount / subs.length) * 100)
   }
-
   const globalProgress = Math.round(semesterList.reduce((acc, p) => acc + getPeriodProgress(p), 0) / profile.totalSemesters)
 
   if (loading) return <DashboardSkeleton />
@@ -88,7 +80,6 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-32 transition-colors duration-300">
       
-      {/* CABEÇALHO */}
       <header className="bg-white dark:bg-slate-900 shadow-sm pt-8 pb-6 px-4 sticky top-0 z-20 border-b border-gray-100 dark:border-slate-800 transition-colors">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
@@ -169,10 +160,7 @@ export function Dashboard() {
                                     onClick={() => openAddModal(period)}
                                     className="w-full py-3.5 rounded-xl border-2 border-dashed border-blue-200 dark:border-blue-900 text-[#0047AB] dark:text-blue-400 font-bold text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition flex items-center justify-center gap-2 group"
                                 >
-                                    <div className="bg-blue-100 dark:bg-blue-900/50 text-[#0047AB] dark:text-blue-400 p-1 rounded group-hover:bg-[#0047AB] dark:group-hover:bg-blue-500 group-hover:text-white transition">
-                                        <Plus className="w-3 h-3" />
-                                    </div>
-                                    Adicionar Matéria ao {period}
+                                    <Plus className="w-3 h-3" /> Adicionar Matéria
                                 </button>
                             </div>
                         </div>

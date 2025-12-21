@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { supabase } from '../supabaseClient.js'
 import { Calendar as CalendarIcon, Plus, CheckCircle, Clock, AlertTriangle, FileText, Book, Pin } from 'lucide-react'
-import { AddTaskModal } from '../components/AddTaskModal'
+import { AddTaskModal } from '../components/AddTaskModal.jsx'
 
 export function Agenda() {
   const { user } = useAuth()
@@ -13,18 +13,17 @@ export function Agenda() {
 
   useEffect(() => {
     if (user) fetchTasks()
-  }, [user, filter]) // Recarrega se mudar o filtro
+  }, [user, filter])
 
   async function fetchTasks() {
     setLoading(true)
     try {
-      // Busca tarefas E o nome da matéria relacionada
       const { data, error } = await supabase
         .from('tasks')
         .select('*, subjects(name)')
         .eq('user_id', user.id)
         .eq('status', filter)
-        .order('due_date', { ascending: true }) // Mais urgentes primeiro
+        .order('due_date', { ascending: true })
 
       if (error) throw error
       setTasks(data || [])
@@ -42,7 +41,6 @@ export function Agenda() {
     setTasks(tasks.filter(t => t.id !== task.id))
 
     await supabase.from('tasks').update({ status: newStatus }).eq('id', task.id)
-    // Não precisa dar fetch, pois já removemos da lista visualmente
   }
 
   // --- LÓGICA DO RELÓGIO DE PRESSÃO ---
@@ -53,10 +51,16 @@ export function Agenda() {
     const diffHours = diffMs / (1000 * 60 * 60)
     const diffDays = Math.ceil(diffHours / 24)
 
-    if (diffMs < 0) return { text: 'Atrasado', color: 'text-red-600 bg-red-50 border-red-200', icon: AlertTriangle }
-    if (diffHours < 24) return { text: 'É Hoje!', color: 'text-rose-600 bg-rose-50 border-rose-200', icon: AlertTriangle }
-    if (diffDays <= 3) return { text: `Faltam ${diffDays} dias`, color: 'text-orange-600 bg-orange-50 border-orange-200', icon: Clock }
-    return { text: new Date(dateString).toLocaleDateString('pt-BR'), color: 'text-gray-500 bg-gray-50 border-gray-100', icon: CalendarIcon }
+    if (diffMs < 0) return { text: 'Atrasado', color: 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900', icon: AlertTriangle }
+    if (diffHours < 24) return { text: 'É Hoje!', color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900', icon: AlertTriangle }
+    if (diffDays <= 3) return { text: `Faltam ${diffDays} dias`, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-900', icon: Clock }
+    
+    // Padrão (Sem urgência)
+    return { 
+        text: new Date(dateString).toLocaleDateString('pt-BR'), 
+        color: 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700', 
+        icon: CalendarIcon 
+    }
   }
 
   function getTypeIcon(type) {
@@ -69,21 +73,22 @@ export function Agenda() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-24 p-4 transition-colors duration-300">
+      
       <div className="flex justify-between items-center mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <CalendarIcon className="text-[#0047AB]" /> Agenda
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <CalendarIcon className="text-[#0047AB] dark:text-blue-400" /> Agenda
         </h1>
-        <div className="flex bg-white p-1 rounded-lg border border-gray-200">
+        <div className="flex bg-white dark:bg-slate-900 p-1 rounded-lg border border-gray-200 dark:border-slate-800">
             <button 
                 onClick={() => setFilter('Pendente')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${filter === 'Pendente' ? 'bg-[#0047AB] text-white' : 'text-gray-500'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${filter === 'Pendente' ? 'bg-[#0047AB] dark:bg-blue-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
             >
                 A Fazer
             </button>
             <button 
                 onClick={() => setFilter('Concluída')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${filter === 'Concluída' ? 'bg-green-600 text-white' : 'text-gray-500'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${filter === 'Concluída' ? 'bg-green-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
             >
                 Feitas
             </button>
@@ -92,14 +97,14 @@ export function Agenda() {
 
       <div className="space-y-3">
         {loading ? (
-             <div className="text-center py-10 text-gray-400">Carregando...</div>
+             <div className="text-center py-10 text-gray-400 dark:text-gray-600">Carregando...</div>
         ) : tasks.length === 0 ? (
             <div className="text-center py-20 opacity-50">
-                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="font-medium text-gray-600">
+                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-slate-700" />
+                <p className="font-medium text-gray-600 dark:text-slate-400">
                     {filter === 'Pendente' ? 'Tudo limpo por aqui!' : 'Nenhuma tarefa concluída.'}
                 </p>
-                {filter === 'Pendente' && <p className="text-sm">Aproveite para descansar.</p>}
+                {filter === 'Pendente' && <p className="text-sm text-gray-500 dark:text-slate-500">Aproveite para descansar.</p>}
             </div>
         ) : (
             tasks.map(task => {
@@ -107,19 +112,19 @@ export function Agenda() {
                 const UrgencyIcon = urgency.icon
 
                 return (
-                    <div key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-start group">
+                    <div key={task.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 flex gap-4 items-start group transition-colors">
                         
                         {/* Checkbox Customizado */}
                         <button 
                             onClick={() => toggleStatus(task)}
-                            className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${filter === 'Concluída' ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-[#0047AB]'}`}
+                            className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${filter === 'Concluída' ? 'bg-green-500 border-green-500' : 'border-gray-300 dark:border-slate-600 hover:border-[#0047AB] dark:hover:border-blue-400'}`}
                         >
                             {filter === 'Concluída' && <CheckCircle className="w-4 h-4 text-white" />}
                         </button>
 
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
-                                <h3 className={`font-bold text-gray-800 ${filter === 'Concluída' ? 'line-through text-gray-400' : ''}`}>
+                                <h3 className={`font-bold text-gray-800 dark:text-gray-100 ${filter === 'Concluída' ? 'line-through text-gray-400 dark:text-slate-600' : ''}`}>
                                     {task.title}
                                 </h3>
                                 
@@ -133,13 +138,13 @@ export function Agenda() {
                             </div>
 
                             <div className="flex items-center gap-3 mt-2">
-                                <span className="flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                                <span className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 px-2 py-1 rounded border border-gray-100 dark:border-slate-700">
                                     {getTypeIcon(task.type)} {task.type}
                                 </span>
                                 
                                 {task.subjects && (
-                                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                                        em <span className="font-bold text-gray-600">{task.subjects.name}</span>
+                                    <span className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                                        em <span className="font-bold text-gray-600 dark:text-slate-300">{task.subjects.name}</span>
                                     </span>
                                 )}
                             </div>
@@ -152,11 +157,12 @@ export function Agenda() {
 
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-24 right-6 bg-[#0047AB] text-white p-4 rounded-full shadow-xl hover:bg-blue-800 transition transform hover:scale-105 z-40"
+        className="fixed bottom-28 right-6 bg-[#0047AB] dark:bg-blue-600 text-white p-4 rounded-full shadow-xl shadow-blue-900/20 hover:bg-blue-800 dark:hover:bg-blue-500 transition transform hover:scale-110 active:scale-95 z-40"
       >
         <Plus className="h-6 w-6" />
       </button>
 
+      {/* Modal de Adicionar Tarefa */}
       <AddTaskModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
