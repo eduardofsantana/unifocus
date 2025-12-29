@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { supabase } from '../supabaseClient.js'
-import { Calendar, MapPin, Clock, Plus, Loader2, Trash2 } from 'lucide-react'
+import { Calendar, MapPin, Clock, Plus, Loader2, Trash2, User } from 'lucide-react'
 import { AddClassModal } from '../components/AddClassModal.jsx'
 import { toast } from 'sonner'
 
@@ -11,7 +11,6 @@ export function Schedule() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   
-  // Dia atual (0=Dom, 1=Seg...)
   const todayIndex = new Date().getDay()
   const [selectedDay, setSelectedDay] = useState(todayIndex === 0 ? 1 : todayIndex)
 
@@ -30,7 +29,6 @@ export function Schedule() {
 
   async function fetchSchedule() {
     try {
-      // CORREÇÃO: Removido 'color_code' que não existe na tabela
       const { data, error } = await supabase
         .from('schedules')
         .select('*, subjects(name, professor)')
@@ -41,7 +39,6 @@ export function Schedule() {
       setClasses(data || [])
     } catch (error) {
       console.error(error)
-      // toast.error('Erro ao carregar grade') 
     } finally {
       setLoading(false)
     }
@@ -139,9 +136,12 @@ export function Schedule() {
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">
                                     {cls.subjects?.name || 'Matéria'}
                                 </h3>
-                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 uppercase font-medium flex items-center gap-1">
-                                    {cls.subjects?.professor || 'Professor não inf.'}
-                                </p>
+                                {/* AQUI É A MUDANÇA: SÓ MOSTRA SE TIVER PROFESSOR */}
+                                {cls.subjects?.professor && (
+                                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 uppercase font-medium flex items-center gap-1">
+                                        <User className="w-3 h-3" /> {cls.subjects.professor}
+                                    </p>
+                                )}
                             </div>
                             <div className="text-right">
                                 <p className={`text-sm font-black ${active ? 'text-[#0047AB] dark:text-blue-400' : 'text-gray-700 dark:text-slate-300'}`}>
