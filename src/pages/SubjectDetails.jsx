@@ -102,6 +102,7 @@ export function SubjectDetails() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
       
+      {/* CABEÇALHO FIXO */}
       <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 sticky top-0 z-20 transition-colors">
         <div className="p-4 flex items-center gap-3">
           <Link to="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-600 dark:text-slate-400 transition">
@@ -113,6 +114,7 @@ export function SubjectDetails() {
           </div>
         </div>
 
+        {/* ABAS */}
         <div className="flex px-4 gap-8 text-sm font-medium text-gray-500 dark:text-slate-500">
             <button onClick={() => setActiveTab('performance')} className={`pb-3 border-b-2 transition flex items-center gap-2 ${activeTab === 'performance' ? 'border-[#0047AB] dark:border-blue-500 text-[#0047AB] dark:text-blue-400' : 'border-transparent hover:text-gray-700 dark:hover:text-slate-300'}`}>
                 <BarChart2 className="w-4 h-4" /> Desempenho
@@ -127,6 +129,7 @@ export function SubjectDetails() {
         
         {activeTab === 'performance' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                {/* KPI CARDS */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-[#0047AB] dark:bg-blue-600 text-white p-4 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none relative overflow-hidden">
                         <div className="absolute right-[-10px] top-[-10px] opacity-20"><Calculator className="w-16 h-16" /></div>
@@ -142,7 +145,9 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                {/* NOTAS POR UNIDADE (RESPONSIVO: 1 COLUNA MOBILE / 2 COLUNAS PC) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Unidade 1 */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center px-1">
                             <h3 className="font-bold text-gray-700 dark:text-slate-300 text-sm">Unidade 1</h3>
@@ -162,6 +167,7 @@ export function SubjectDetails() {
                         </div>
                     </div>
 
+                    {/* Unidade 2 */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center px-1">
                             <h3 className="font-bold text-gray-700 dark:text-slate-300 text-sm">Unidade 2</h3>
@@ -182,6 +188,7 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
+                {/* FORM ADD NOTA */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors">
                     <h3 className="font-bold text-xs text-gray-400 dark:text-slate-500 uppercase mb-3">Adicionar Nota</h3>
                     <form onSubmit={handleAddGrade} className="flex flex-col gap-3">
@@ -191,7 +198,7 @@ export function SubjectDetails() {
                             ))}
                         </div>
                         <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
-                            <input placeholder="Nome" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
+                            <input placeholder="Nome (Ex: Prova)" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
                             <input type="number" placeholder="Peso" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-center text-gray-900 dark:text-white outline-none" value={newWeight} onChange={e => setNewWeight(e.target.value)} required />
                             <input type="number" step="0.1" placeholder="Nota" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm font-bold text-center text-gray-900 dark:text-white outline-none" value={newValue} onChange={e => setNewValue(e.target.value)} required />
                         </div>
@@ -203,6 +210,7 @@ export function SubjectDetails() {
             </div>
         )}
 
+        {/* --- ABA 2: CONTEÚDOS --- */}
         {activeTab === 'topics' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
