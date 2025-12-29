@@ -1,72 +1,83 @@
-# 🎓 UniFocus
+🎓 **UniFocus**
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-0EA5E9?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
-[![Live Demo](https://img.shields.io/badge/Live-unifocus--omega.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://unifocus-omega.vercel.app/)
+📚 **Sobre o Projeto**
 
----
 
-## 📚 Sobre o Projeto
+**UniFocus** é um ecossistema acadêmico de alta performance projetado para estudantes que buscam excelência sem o estresse de planilhas manuais.
 
-**UniFocus** é um gerenciador acadêmico completo para estudantes universitários.  
-Reduz ansiedade acadêmica centralizando notas, faltas, horários e certificações em interface visual intuitiva, eliminando planilhas complexas.
+O sistema centraliza notas, frequências, cronogramas e insights de desempenho em uma interface inspirada nos melhores softwares SaaS de produtividade do mercado, eliminando a ansiedade acadêmica através da organização.
 
----
 
-## 🤖 Metodologia de Desenvolvimento
+🤖 **Metodologia de Desenvolvimento**
 
-Abordagem **Desenvolvimento Assistido por IA (Vibecoding)**:
+Este projeto foi construído utilizando a abordagem Desenvolvimento Assistido por IA (Vibecoding), focando em:
 
-1. **Diagnóstico**: Identificação de dores reais (ex: "Quanto preciso na final?")
-2. **Geração**: Código base via IA
-3. **Integração**: Backend Supabase + tratamento de erros
-4. **Refinamento**: UX (Dark Mode, Skeletons, Responsividade)
+**UX Centrada no Aluno:** Fluxos otimizados para registrar notas e presenças com o mínimo de cliques.
 
-Demonstra adaptação a novas ferramentas com foco em entrega de valor.
+**Arquitetura Fullstack:** Integração profunda com Supabase para persistência de dados e autenticação segura.
 
----
+**Design Híbrido:** Equilíbrio entre a sobriedade profissional e o destaque emocional (ex: Botão de Foco Centralizado).
 
-## 🛠 Stack Tecnológico
+**Resiliência:** Tratamento de erros rigoroso e interface 100% responsiva (Mobile First).
 
-- **Frontend**: React + Vite
-- **Estilização**: Tailwind CSS + Lucide React
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
-- **Extras**: Sonner (Notificações) + Recharts (Gráficos)
-- **Deploy**: Vercel
 
----
+🛠 **Stack Tecnológico**
 
-## ✨ Funcionalidades
+**Frontend:** React + Vite
 
-### 🏫 Gestão Acadêmica
-- Dashboard por períodos
-- Cálculo de médias ponderadas por unidade
-- Controle de faltas com alertas visuais
-- Checklist de conteúdos estudados
+**Estilização:** Tailwind CSS + Lucide React (Ícones)
 
-### 📅 Organização Diária
-- Grade horária semanal automática
-- Agenda com "Relógio de Pressão" (urgência visual)
-- Timer Pomodoro integrado às matérias
+**Backend:** Supabase (PostgreSQL, Auth, Storage, Row Level Security)
 
-### 🚀 Carreira & Social
-- Turmas virtuais (código convite + mural)
-- Tracking certificações (progresso + upload PDF)
-- Analytics de desempenho acadêmico
+**Gráficos:** Recharts (Visualização de dados avançada)
 
-### ⚙️ Sistema
-- Dark Mode + foto de perfil
-- Autenticação completa + RLS
+**Extras:** Sonner (Notificações Toast) + React Router
 
----
+**Deploy:** Vercel
 
-## 📝 Considerações Finais
 
-**UniFocus** resolve problemas reais de organização acadêmica com UX moderna.  
-Laboratório prático de Arquitetura, Modelagem Relacional e Fullstack.
+✨ **Funcionalidades**
 
-**Desenvolvido por Eduardo Felipe**
+
+🏫 **Gestão Acadêmica Avançada**
+
+**Dashboard Estruturado:** Organização automática por períodos e semestres.
+
+**Calculadora Inteligente:** Médias ponderadas por unidade com arredondamento automático.
+
+**Alerta de Faltas:** Monitoramento de presença com indicadores de risco e barra de progresso dinâmica.
+
+**Checklist de Estudo:** Gestão de conteúdos específicos dentro de cada disciplina.
+
+
+📅 **Organização & Tempo**
+
+**Grade Horária Dinâmica:** Visualização de aulas com indicador "Acontecendo Agora" e local da sala.
+
+**Agenda com Urgência:** Sistema de tarefas com cores baseadas no prazo (Relógio de Pressão).
+
+**Modo Foco (Pomodoro):** Timer integrado que permite registrar minutos estudados diretamente nas matérias.
+
+
+📊 **Relatórios & Insights**
+
+**Analytics de Notas:** Gráfico de barras comparativo entre disciplinas com siglas geradas automaticamente.
+
+**Distribuição de Tempo:** Gráfico de pizza mostrando onde o aluno mais investe tempo de estudo.
+
+**KPIs Acadêmicos:** Visualização instantânea do Coeficiente de Rendimento (CR) e Total de Horas de Foco.
+
+
+⚙️ **Personalização & Perfil**
+
+**Central de Configurações:** Alteração de foto de perfil (Storage), nome e curso.
+
+**Nota de Corte Configurável:** O usuário define a média da sua instituição (ex: 7.0 ou 5.0) para cálculos globais.
+
+**Dark Mode Nativo:** Interface otimizada para estudo noturno e economia de bateria.
+
+
+📝 **Considerações Finais**
+
+O UniFocus vai além de um simples rastreador de notas; é uma ferramenta de gestão estratégica para a vida acadêmica. Demonstra a aplicação prática de modelagem de dados relacional, segurança de banco de dados (RLS) e design de interface adaptativo.
