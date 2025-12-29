@@ -194,7 +194,7 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
-                {/* NOTAS POR UNIDADE (RESPONSIVO: 1 COLUNA MOBILE) */}
+                {/* NOTAS POR UNIDADE (RESPONSIVO: 1 COLUNA MOBILE, 2 NO PC) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Unidade 1 */}
                     <div className="space-y-3">
@@ -205,9 +205,12 @@ export function SubjectDetails() {
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-[100px] transition-colors">
                             {gradesU1.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Nenhuma nota</p> : 
                             gradesU1.map(g => (
-                                <div key={g.id} className="flex justify-between p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
-                                    <div className="flex items-center gap-3">
+                                <div key={g.id} className="flex justify-between items-center p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                    <div className="flex flex-col min-w-0 pr-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
+                                        {g.weight !== 1 && <span className="text-[10px] text-gray-400 dark:text-slate-500">Peso {g.weight}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
                                         <span className="font-bold text-gray-800 dark:text-white">{g.value}</span>
                                         <button onClick={() => handleDeleteGrade(g.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
                                     </div>
@@ -225,9 +228,12 @@ export function SubjectDetails() {
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-[100px] transition-colors">
                             {gradesU2.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Nenhuma nota</p> : 
                             gradesU2.map(g => (
-                                <div key={g.id} className="flex justify-between p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
-                                    <div className="flex items-center gap-3">
+                                <div key={g.id} className="flex justify-between items-center p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                    <div className="flex flex-col min-w-0 pr-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
+                                        {g.weight !== 1 && <span className="text-[10px] text-gray-400 dark:text-slate-500">Peso {g.weight}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
                                         <span className="font-bold text-gray-800 dark:text-white">{g.value}</span>
                                         <button onClick={() => handleDeleteGrade(g.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
                                     </div>
@@ -237,7 +243,7 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
-                {/* FORM ADD NOTA */}
+                {/* FORM ADD NOTA (CORRIGIDO PARA MOBILE) */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors">
                     <h3 className="font-bold text-xs text-gray-400 dark:text-slate-500 uppercase mb-3">Adicionar Nota</h3>
                     <form onSubmit={handleAddGrade} className="flex flex-col gap-3">
@@ -246,11 +252,23 @@ export function SubjectDetails() {
                                 <button type="button" key={u} onClick={() => setNewUnit(u)} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${newUnit === u ? 'bg-[#0047AB] dark:bg-blue-600 text-white border-[#0047AB] dark:border-blue-600' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700'}`}>{u}</button>
                             ))}
                         </div>
-                        <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
-                            <input placeholder="Nome" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
-                            <input type="number" placeholder="Peso" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-center text-gray-900 dark:text-white outline-none" value={newWeight} onChange={e => setNewWeight(e.target.value)} required />
-                            <input type="number" step="0.1" placeholder="Nota" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm font-bold text-center text-gray-900 dark:text-white outline-none" value={newValue} onChange={e => setNewValue(e.target.value)} required />
+                        
+                        {/* Grelha responsiva: 2 cols no mobile (para caber melhor), 12 no desktop */}
+                        <div className="grid grid-cols-2 sm:grid-cols-12 gap-3">
+                            {/* Nome: Ocupa tudo no mobile, metade no PC */}
+                            <div className="col-span-2 sm:col-span-6">
+                                <input placeholder="Nome (Ex: Prova)" className="w-full p-2 bg-gray-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
+                            </div>
+                            {/* Peso: Pequeno */}
+                            <div className="col-span-1 sm:col-span-3">
+                                <input type="number" placeholder="Peso" className="w-full p-2 bg-gray-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg text-sm text-center text-gray-900 dark:text-white outline-none" value={newWeight} onChange={e => setNewWeight(e.target.value)} required />
+                            </div>
+                            {/* Nota: Pequeno */}
+                            <div className="col-span-1 sm:col-span-3">
+                                <input type="number" step="0.1" placeholder="Nota" className="w-full p-2 bg-gray-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg text-sm font-bold text-center text-gray-900 dark:text-white outline-none" value={newValue} onChange={e => setNewValue(e.target.value)} required />
+                            </div>
                         </div>
+
                         <button type="submit" disabled={adding} className="bg-[#0047AB] dark:bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm flex justify-center items-center gap-2 hover:bg-blue-800 dark:hover:bg-blue-500 transition">
                             {adding ? <Loader2 className="animate-spin w-4 h-4" /> : <><Plus className="w-4 h-4"/> Salvar Nota</>}
                         </button>
@@ -259,11 +277,9 @@ export function SubjectDetails() {
             </div>
         )}
 
-        {/* --- ABA 2: CONTEÚDOS (CHECKLIST) --- */}
+        {/* --- ABA 2: CONTEÚDOS --- */}
         {activeTab === 'topics' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                
-                {/* Barra de Progresso do Conteúdo */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
                     <div className="flex justify-between items-end mb-2">
                         <div>
@@ -279,7 +295,6 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
-                {/* Lista de Tópicos */}
                 <div className="space-y-2">
                     {topics.length === 0 ? (
                         <div className="text-center py-10 opacity-50 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl">
@@ -300,15 +315,12 @@ export function SubjectDetails() {
                                         {topic.title}
                                     </span>
                                 </div>
-                                <button onClick={() => handleDeleteTopic(topic.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 p-2">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                <button onClick={() => handleDeleteTopic(topic.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 p-2"><Trash2 className="w-4 h-4" /></button>
                             </div>
                         ))
                     )}
                 </div>
 
-                {/* Input Novo Tópico */}
                 <form onSubmit={handleAddTopic} className="relative">
                     <input 
                         className="w-full p-4 pr-12 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-sm focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition"
