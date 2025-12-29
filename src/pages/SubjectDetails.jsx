@@ -14,6 +14,7 @@ export function SubjectDetails() {
   const [activeTab, setActiveTab] = useState('performance')
   const [loading, setLoading] = useState(true)
   
+  // States para Formulários
   const [newName, setNewName] = useState('')
   const [newWeight, setNewWeight] = useState(1)
   const [newValue, setNewValue] = useState('')
@@ -21,67 +22,108 @@ export function SubjectDetails() {
   const [adding, setAdding] = useState(false)
   const [newTopicTitle, setNewTopicTitle] = useState('')
 
-  useEffect(() => { fetchData() }, [id])
+  useEffect(() => {
+    fetchData()
+  }, [id])
 
   async function fetchData() {
     try {
+      // 1. Buscar a Matéria
       const { data: subjectData, error: subjectError } = await supabase.from('subjects').select('*').eq('id', id).single()
       if (subjectError) throw subjectError
       setSubject(subjectData)
 
+      // 2. Buscar Notas
       const { data: gradesData } = await supabase.from('grades').select('*').eq('subject_id', id).order('created_at', { ascending: true })
       setGrades(gradesData || [])
 
+      // 3. Buscar Tópicos
       const { data: topicsData } = await supabase.from('subject_topics').select('*').eq('subject_id', id).order('created_at', { ascending: true })
       setTopics(topicsData || [])
 
     } catch (error) {
       console.error(error)
+      toast.error('Erro ao carregar detalhes.')
       navigate('/dashboard')
     } finally {
       setLoading(false)
     }
   }
 
+  // --- LÓGICA DE NOTAS ---
   async function handleAddGrade(e) {
     e.preventDefault()
     if (!newName || !newValue) return
     setAdding(true)
     try {
-      await supabase.from('grades').insert([{ subject_id: id, name: newName, weight: parseFloat(newWeight), value: parseFloat(newValue.replace(',', '.')), unit: newUnit }])
+      await supabase.from('grades').insert([{ 
+        subject_id: id, 
+        name: newName, 
+        weight: parseFloat(newWeight), 
+        value: parseFloat(newValue.replace(',', '.')), 
+        unit: newUnit 
+      }])
       setNewName(''); setNewValue(''); setNewWeight(1)
       fetchData()
       toast.success('Nota adicionada')
-    } catch (error) { toast.error(error.message) } finally { setAdding(false) }
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setAdding(false)
+    }
   }
 
   async function handleDeleteGrade(gradeId) {
     if (confirm('Apagar esta nota?')) {
-      await supabase.from('grades').delete().eq('id', gradeId)
-      fetchData()
+      try {
+        await supabase.from('grades').delete().eq('id', gradeId)
+        fetchData()
+        toast.success('Nota removida')
+      } catch (error) {
+        toast.error('Erro ao remover')
+      }
     }
   }
 
+  // --- LÓGICA DE TÓPICOS ---
   async function handleAddTopic(e) {
     e.preventDefault()
     if (!newTopicTitle.trim()) return
+    
+    // Atualização Otimista
     const tempTopic = { id: Math.random(), title: newTopicTitle, is_completed: false }
-    setTopics([...topics, tempTopic]); setNewTopicTitle('')
-    await supabase.from('subject_topics').insert([{ subject_id: id, title: tempTopic.title }])
-    fetchData()
+    setTopics([...topics, tempTopic])
+    setNewTopicTitle('')
+
+    try {
+      await supabase.from('subject_topics').insert([{ subject_id: id, title: tempTopic.title }])
+      fetchData() // Recarrega para pegar o ID real
+    } catch (error) {
+      toast.error('Erro ao adicionar tópico')
+    }
   }
 
   async function toggleTopic(topic) {
     const updatedTopics = topics.map(t => t.id === topic.id ? { ...t, is_completed: !t.is_completed } : t)
     setTopics(updatedTopics)
-    await supabase.from('subject_topics').update({ is_completed: !topic.is_completed }).eq('id', topic.id)
+
+    try {
+      await supabase.from('subject_topics').update({ is_completed: !topic.is_completed }).eq('id', topic.id)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   async function handleDeleteTopic(topicId) {
     setTopics(topics.filter(t => t.id !== topicId))
-    await supabase.from('subject_topics').delete().eq('id', topicId)
+    try {
+      await supabase.from('subject_topics').delete().eq('id', topicId)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
+  // --- CÁLCULOS ---
   function calculateAverage(gradesList) {
     if (gradesList.length === 0) return 0
     const totalWeight = gradesList.reduce((acc, g) => acc + (g.weight || 0), 0)
@@ -108,18 +150,24 @@ export function SubjectDetails() {
           <Link to="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-600 dark:text-slate-400 transition">
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">{subject.name}</h1>
-            <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold tracking-wider">{subject.period}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold tracking-wider">{subject.period || 'Geral'}</p>
           </div>
         </div>
 
-        {/* ABAS */}
+        {/* ABAS DE NAVEGAÇÃO */}
         <div className="flex px-4 gap-8 text-sm font-medium text-gray-500 dark:text-slate-500">
-            <button onClick={() => setActiveTab('performance')} className={`pb-3 border-b-2 transition flex items-center gap-2 ${activeTab === 'performance' ? 'border-[#0047AB] dark:border-blue-500 text-[#0047AB] dark:text-blue-400' : 'border-transparent hover:text-gray-700 dark:hover:text-slate-300'}`}>
+            <button 
+                onClick={() => setActiveTab('performance')} 
+                className={`pb-3 border-b-2 transition flex items-center gap-2 ${activeTab === 'performance' ? 'border-[#0047AB] dark:border-blue-500 text-[#0047AB] dark:text-blue-400' : 'border-transparent hover:text-gray-700 dark:hover:text-slate-300'}`}
+            >
                 <BarChart2 className="w-4 h-4" /> Desempenho
             </button>
-            <button onClick={() => setActiveTab('topics')} className={`pb-3 border-b-2 transition flex items-center gap-2 ${activeTab === 'topics' ? 'border-[#0047AB] dark:border-blue-500 text-[#0047AB] dark:text-blue-400' : 'border-transparent hover:text-gray-700 dark:hover:text-slate-300'}`}>
+            <button 
+                onClick={() => setActiveTab('topics')} 
+                className={`pb-3 border-b-2 transition flex items-center gap-2 ${activeTab === 'topics' ? 'border-[#0047AB] dark:border-blue-500 text-[#0047AB] dark:text-blue-400' : 'border-transparent hover:text-gray-700 dark:hover:text-slate-300'}`}
+            >
                 <BookOpen className="w-4 h-4" /> Conteúdos
             </button>
         </div>
@@ -127,6 +175,7 @@ export function SubjectDetails() {
 
       <main className="max-w-3xl mx-auto p-4 space-y-6">
         
+        {/* --- ABA 1: DESEMPENHO (NOTAS & FALTAS) --- */}
         {activeTab === 'performance' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
                 {/* KPI CARDS */}
@@ -134,18 +183,18 @@ export function SubjectDetails() {
                     <div className="bg-[#0047AB] dark:bg-blue-600 text-white p-4 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none relative overflow-hidden">
                         <div className="absolute right-[-10px] top-[-10px] opacity-20"><Calculator className="w-16 h-16" /></div>
                         <p className="text-blue-100 text-[10px] font-bold uppercase mb-1">Média Geral</p>
-                        <div className="text-3xl font-black">{globalAverage.toFixed(1)}</div>
+                        <div className="text-2xl sm:text-3xl font-black">{globalAverage.toFixed(1)}</div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-colors">
                         <div className="absolute right-[-10px] top-[-10px] text-gray-100 dark:text-slate-800"><AlertCircle className="w-16 h-16" /></div>
                         <p className="text-gray-400 dark:text-slate-500 text-[10px] font-bold uppercase mb-1">Faltas</p>
-                        <div className="text-3xl font-black text-gray-800 dark:text-white">
+                        <div className="text-2xl sm:text-3xl font-black text-gray-800 dark:text-white">
                             {subject.current_absences}<span className="text-gray-300 dark:text-slate-600 text-lg font-medium">/{subject.max_absences}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* NOTAS POR UNIDADE (RESPONSIVO: 1 COLUNA MOBILE / 2 COLUNAS PC) */}
+                {/* NOTAS POR UNIDADE (RESPONSIVO: 1 COLUNA MOBILE) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Unidade 1 */}
                     <div className="space-y-3">
@@ -154,10 +203,10 @@ export function SubjectDetails() {
                             <span className="bg-blue-50 dark:bg-blue-900/30 text-[#0047AB] dark:text-blue-400 text-[10px] font-bold px-2 py-1 rounded">Média: {avgU1.toFixed(1)}</span>
                         </div>
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-[100px] transition-colors">
-                            {gradesU1.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Vazio</p> : 
+                            {gradesU1.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Nenhuma nota</p> : 
                             gradesU1.map(g => (
                                 <div key={g.id} className="flex justify-between p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{g.name}</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
                                     <div className="flex items-center gap-3">
                                         <span className="font-bold text-gray-800 dark:text-white">{g.value}</span>
                                         <button onClick={() => handleDeleteGrade(g.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
@@ -174,10 +223,10 @@ export function SubjectDetails() {
                             <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-[10px] font-bold px-2 py-1 rounded">Média: {avgU2.toFixed(1)}</span>
                         </div>
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-[100px] transition-colors">
-                            {gradesU2.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Vazio</p> : 
+                            {gradesU2.length === 0 ? <p className="text-center text-gray-400 dark:text-slate-600 text-xs py-8">Nenhuma nota</p> : 
                             gradesU2.map(g => (
                                 <div key={g.id} className="flex justify-between p-3 border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{g.name}</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate max-w-[120px]">{g.name}</span>
                                     <div className="flex items-center gap-3">
                                         <span className="font-bold text-gray-800 dark:text-white">{g.value}</span>
                                         <button onClick={() => handleDeleteGrade(g.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
@@ -198,7 +247,7 @@ export function SubjectDetails() {
                             ))}
                         </div>
                         <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
-                            <input placeholder="Nome (Ex: Prova)" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
+                            <input placeholder="Nome" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white outline-none" value={newName} onChange={e => setNewName(e.target.value)} required />
                             <input type="number" placeholder="Peso" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm text-center text-gray-900 dark:text-white outline-none" value={newWeight} onChange={e => setNewWeight(e.target.value)} required />
                             <input type="number" step="0.1" placeholder="Nota" className="p-2 bg-gray-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg text-sm font-bold text-center text-gray-900 dark:text-white outline-none" value={newValue} onChange={e => setNewValue(e.target.value)} required />
                         </div>
@@ -210,9 +259,11 @@ export function SubjectDetails() {
             </div>
         )}
 
-        {/* --- ABA 2: CONTEÚDOS --- */}
+        {/* --- ABA 2: CONTEÚDOS (CHECKLIST) --- */}
         {activeTab === 'topics' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                
+                {/* Barra de Progresso do Conteúdo */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
                     <div className="flex justify-between items-end mb-2">
                         <div>
@@ -228,6 +279,7 @@ export function SubjectDetails() {
                     </div>
                 </div>
 
+                {/* Lista de Tópicos */}
                 <div className="space-y-2">
                     {topics.length === 0 ? (
                         <div className="text-center py-10 opacity-50 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl">
@@ -237,7 +289,10 @@ export function SubjectDetails() {
                     ) : (
                         topics.map(topic => (
                             <div key={topic.id} className={`flex items-center justify-between p-4 rounded-xl border transition ${topic.is_completed ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/30' : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800'}`}>
-                                <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleTopic(topic)}>
+                                <div 
+                                    className="flex items-center gap-3 cursor-pointer flex-1" 
+                                    onClick={() => toggleTopic(topic)}
+                                >
                                     <div className={`transition ${topic.is_completed ? 'text-green-600' : 'text-gray-300 dark:text-slate-600'}`}>
                                         {topic.is_completed ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
                                     </div>
@@ -245,12 +300,15 @@ export function SubjectDetails() {
                                         {topic.title}
                                     </span>
                                 </div>
-                                <button onClick={() => handleDeleteTopic(topic.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 p-2"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleDeleteTopic(topic.id)} className="text-gray-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 p-2">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                         ))
                     )}
                 </div>
 
+                {/* Input Novo Tópico */}
                 <form onSubmit={handleAddTopic} className="relative">
                     <input 
                         className="w-full p-4 pr-12 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-sm focus:ring-2 focus:ring-[#0047AB] dark:focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition"
