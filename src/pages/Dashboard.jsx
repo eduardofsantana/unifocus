@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient.js'
 import { SubjectCard } from '../components/SubjectCard.jsx'
 import { AddSubjectModal } from '../components/AddSubjectModal.jsx'
 import { DashboardSkeleton } from '../components/Skeletons.jsx'
-import { Plus, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, BarChart3, ChevronDown, GraduationCap, CheckCircle, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -19,15 +19,24 @@ export function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('') 
   const [expandedPeriods, setExpandedPeriods] = useState({}) 
 
-  useEffect(() => { if (user) fetchData() }, [user])
+  useEffect(() => {
+    if (user) fetchData()
+  }, [user])
 
   async function fetchData() {
     try {
+      // Pequeno delay para garantir que o Skeleton apareça e evite "flicker"
       const minLoadTime = new Promise(resolve => setTimeout(resolve, 300))
+      
       const profilePromise = supabase.from('profiles').select('*').eq('id', user.id).single()
+      // IMPORTANTE: Trazemos as notas (grades) junto para calcular a média no Dashboard
       const subjectsPromise = supabase.from('subjects').select('*, grades(*)').order('created_at', { ascending: true })
 
-      const [_, { data: profileData }, { data: subjectData }] = await Promise.all([minLoadTime, profilePromise, subjectsPromise])
+      const [_, { data: profileData }, { data: subjectData }] = await Promise.all([
+        minLoadTime, 
+        profilePromise, 
+        subjectsPromise
+      ])
 
       if (profileData) {
         setProfile({
@@ -36,44 +45,82 @@ export function Dashboard() {
             totalSemesters: profileData.total_semesters || 8,
             avatar: profileData.avatar_url || null
         })
+        // Abre o 1º período por padrão se nada estiver aberto
         setExpandedPeriods(prev => (Object.keys(prev).length === 0 ? { '1º Período': true } : prev))
       }
       setSubjects(subjectData || [])
-    } catch (error) { console.error(error) } finally { setLoading(false) }
+    } catch (error) {
+      console.error("Erro no Dashboard:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const groupedSubjects = subjects.reduce((acc, subject) => {
-    const p = subject.period || 'Extras'; if (!acc[p]) acc[p] = []; acc[p].push(subject); return acc
+    const p = subject.period || 'Extras'
+    if (!acc[p]) acc[p] = []
+    acc[p].push(subject)
+    return acc
   }, {})
-  const semesterList = Array.from({ length: profile.totalSemesters }, (_, i) => `${i + 1}º Período`)
+
+  const totalSems = Math.max(1, profile.totalSemesters || 8)
+  const semesterList = Array.from({ length: totalSems }, (_, i) => `${i + 1}º Período`)
   
-  function togglePeriod(period) { setExpandedPeriods(prev => ({...prev, [period]: !prev[period]})) }
-  function openAddModal(period) { setSelectedPeriod(period); setIsModalOpen(true) }
+  function togglePeriod(period) { 
+    setExpandedPeriods(prev => ({...prev, [period]: !prev[period]})) 
+  }
   
+  function openAddModal(period) { 
+    setSelectedPeriod(period)
+    setIsModalOpen(true) 
+  }
+  
+  // --- CORREÇÃO DO ERRO AQUI ---
   function getPeriodProgress(periodName) {
     const subs = groupedSubjects[periodName] || []
     if (subs.length === 0) return 0
+    
     const passedCount = subs.filter(sub => {
-        const grades = sub.grades || []; const totalW = grades.reduce((acc, g) => acc + (g.weight || 0), 0); const totalV = grades.reduce((acc, g) => acc + ((g.value || 0) * (g.weight || 0)), 0)
-        const avg = grades.length > 0 ? (totalWeight > 0 ? totalValue / totalWeight : 0) : 0
+        const grades = sub.grades || []
+        
+        // Calcula peso total e valor total
+        const totalWeight = grades.reduce((acc, g) => acc + (g.weight || 0), 0)
+        const totalValue = grades.reduce((acc, g) => acc + ((g.value || 0) * (g.weight || 0)), 0)
+        
+        // Calcula média (evitando divisão por zero)
+        const avg = grades.length > 0 && totalWeight > 0 ? (totalValue / totalWeight) : 0
+        
+        // Verifica se a média é maior ou igual à nota de corte (padrão 7)
         return avg >= (sub.passing_grade || 7)
     }).length
+
     return Math.round((passedCount / subs.length) * 100)
   }
-  const globalProgress = Math.round(semesterList.reduce((acc, p) => acc + getPeriodProgress(p), 0) / profile.totalSemesters)
+
+  // Calcula progresso global (média dos progressos dos semestres)
+  const globalProgress = Math.round(semesterList.reduce((acc, p) => acc + getPeriodProgress(p), 0) / totalSems)
 
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-32 transition-colors duration-300">
+    <div className="min-h-screen bg-muted/30 pb-32 transition-colors duration-300 animate-in fade-in duration-500">
       
       {/* Header Minimalista */}
       <header className="bg-background border-b border-border sticky top-0 z-20 px-6 py-5 flex justify-between items-end backdrop-blur-sm bg-opacity-90">
-        <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Visão Geral</h1>
+        <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-full bg-muted border-2 border-background shadow-sm overflow-hidden flex items-center justify-center">
+                {profile.avatar ? (
+                    <img src={profile.avatar} alt="Perfil" className="w-full h-full object-cover" />
+                ) : (
+                    <User className="w-5 h-5 text-muted-foreground" />
+                )}
+            </div>
+            <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
+                    {profile.course || 'Sem Curso'}
+                </p>
+                <h1 className="text-xl font-bold text-foreground tracking-tight">Olá, {profile.name}</h1>
+            </div>
         </div>
         
         <Link to="/stats" className="flex items-center gap-3 px-3 py-1.5 bg-secondary/50 hover:bg-secondary rounded-lg border border-border transition-colors group">
@@ -153,7 +200,12 @@ export function Dashboard() {
         <Plus className="h-6 w-6" />
       </button>
 
-      <AddSubjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={() => { fetchData(); toast.success('Adicionado') }} defaultPeriod={selectedPeriod} />
+      <AddSubjectModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => { fetchData(); toast.success('Adicionado') }} 
+        defaultPeriod={selectedPeriod} 
+      />
     </div>
   )
 }
