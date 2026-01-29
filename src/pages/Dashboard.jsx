@@ -179,7 +179,7 @@ export function Dashboard() {
                             <div className="grid gap-0">
                                 {periodSubs.length === 0 ? (
                                     <div className="text-center py-8 border-2 border-dashed border-border rounded-xl bg-muted/20">
-                                        <p className="text-xs text-muted-foreground font-medium">Nenhuma disciplina registada.</p>
+                                        <p className="text-xs text-muted-foreground font-medium">Nenhuma disciplina registrada.</p>
                                     </div>
                                 ) : (
                                     periodSubs.map(sub => (
